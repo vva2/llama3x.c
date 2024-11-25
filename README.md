@@ -19,3 +19,7 @@ Evaluation is done on TriviaQA, MMLU, CommonsenseQA
 
 - https://github.com/jameswdelancey/llama3.c
 - https://github.com/karpathy/llama2.c
+
+### Propmts
+
+- 

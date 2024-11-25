@@ -16,6 +16,21 @@
     #include <sys/mman.h>
 #endif
 
+#define NORM_EPS 1e-5f
+#define ROPE_THETA 500000.0f
+#define USE_SCALED_ROPE 1  // true
+
+#if defined _LLAMA_3_1_8B
+    #define FFN_DIM_MULTIPLIER 1.3f
+    #define MULTIPLE_OF 1024
+#elif defined _LLAMA_3_2_3B
+    #define FFN_DIM_MULTIPLIER 1.0f
+    #define MULTIPLE_OF 256
+#else  // _LLAMA_3_2_1B
+    #define FFN_DIM_MULTIPLIER 1.5f
+    #define MULTIPLE_OF 256
+#endif
+
 // structs
 
 typedef struct {
@@ -180,6 +195,15 @@ void read_checkpoint(char* checkpoint, Config* config, TransformerWeights* weigh
     int shared_weights = config->vocab_size > 0 ? 1 : 0;
     config->vocab_size = abs(config->vocab_size);
 
+#ifndef _LLAMA_3_2_1B
+    config->hidden_dim = (int) (config->hidden_dim * FFN_DIM_MULTIPLIER);
+#endif
+
+    // Ensure `hidden_dim` is a multiple of `multiple_of`
+    if (config->hidden_dim % MULTIPLE_OF != 0) {
+        config->hidden_dim = ((config->hidden_dim / MULTIPLE_OF) + 1) * MULTIPLE_OF;
+    }
+
 #if defined _WIN32
     _fseeki64(file, 0, SEEK_END); // move file pointer to end of file
     *file_size = _ftelli64(file); // get the file size, in bytes
@@ -302,14 +326,14 @@ int str_lookup(char *str, TokenIndex *sorted_vocab, int vocab_size) {
     return res != NULL ? res->id : -1;
 }
 
-void rmsnorm(float* o, float* x, float* weight, int size) {
+void rmsnorm(float* o, float* x, float* weight, int size, float norm_eps) {
     // calculate sum of squares
     float ss = 0.0f;
     for (int j = 0; j < size; j++) {
         ss += x[j] * x[j];
     }
     ss /= size;
-    ss += 1e-5f;
+    ss += norm_eps;
     ss = 1.0f / sqrtf(ss);
     // normalize and scale
     for (int j = 0; j < size; j++) {
@@ -646,7 +670,7 @@ float* forward(Transformer* transformer, int token, int pos)
     {
 
         // attention rmsnorm
-        rmsnorm(s->xb, x, w->rms_att_weight + l*dim, dim);
+        rmsnorm(s->xb, x, w->rms_att_weight + l*dim, dim, NORM_EPS);
 
         // key and value point to the kv cache
         int loff = l * p->seq_len * kv_dim; // kv cache layer offset for convenience
@@ -658,21 +682,28 @@ float* forward(Transformer* transformer, int token, int pos)
         matmul(s->k, s->xb, w->wk + l*dim*kv_dim, dim, kv_dim);
         matmul(s->v, s->xb, w->wv + l*dim*kv_dim, dim, kv_dim);
 
+        float ntk_alpha = 32.0f; // from "factor": 32.0
+//        float scaled_pos = pos / ntk_alpha;
+        float scaled_pos = pos;
+
         // RoPE relative positional encoding: complex-valued rotate q and k in each head
-        for (int i = 0; i < dim; i+=2) {
-            int head_dim = i % head_size;
-            float freq = 1.0f / powf(10000.0f, head_dim / (float)head_size);
-            float val = pos * freq;
+        for (int i = 0; i < p->n_heads; i++) {
+          for (int j = 0; j < head_size; j += 2) {
+            float freq = 1.0f / powf(ROPE_THETA, (float)j / (float)head_size);
+            float val = scaled_pos * freq;
             float fcr = cosf(val);
             float fci = sinf(val);
-            int rotn = i < kv_dim ? 2 : 1; // how many vectors? 2 = q & k, 1 = q only
-            for (int v = 0; v < rotn; v++) {
-                float* vec = v == 0 ? s->q : s->k; // the vector to rotate (query or key)
-                float v0 = vec[i];
-                float v1 = vec[i+1];
-                vec[i]   = v0 * fcr - v1 * fci;
-                vec[i+1] = v0 * fci + v1 * fcr;
+            float q0 = s->q[i * head_size + j];
+            float q1 = s->q[i * head_size + j + 1];
+            s->q[i * head_size + j] = q0 * fcr - q1 * fci;
+            s->q[i * head_size + j + 1] = q0 * fci + q1 * fcr;
+            if (i < p->n_kv_heads) {
+              float k0 = s->k[i * head_size + j];
+              float k1 = s->k[i * head_size + j + 1];
+              s->k[i * head_size + j] = k0 * fcr - k1 * fci;
+              s->k[i * head_size + j + 1] = k0 * fci + k1 * fcr;
             }
+          }
         }
 
         // multihead attention. iterate over all heads
@@ -724,7 +755,7 @@ float* forward(Transformer* transformer, int token, int pos)
         }
 
         // ffn rmsnorm
-        rmsnorm(s->xb, x, w->rms_ffn_weight + l*dim, dim);
+        rmsnorm(s->xb, x, w->rms_ffn_weight + l*dim, dim, NORM_EPS);
 
         // Now for FFN in PyTorch we have: self.w2(F.silu(self.w1(x)) * self.w3(x))
         // first calculate self.w1(x) and self.w3(x)
@@ -751,7 +782,7 @@ float* forward(Transformer* transformer, int token, int pos)
     }
 
     // final rmsnorm
-    rmsnorm(x, x, w->rms_final_weight, dim);
+    rmsnorm(x, x, w->rms_final_weight, dim, NORM_EPS);
 
     // classifier into logits
     matmul(s->logits, x, w->wcls, p->dim, p->vocab_size);
@@ -791,9 +822,12 @@ void generate(Transformer *transformer, Tokenizer *tokenizer, Sampler *sampler, 
         }
         pos++;
 
-        // TODO why this termination?
+        // TODO
         // data-dependent terminating condition: the BOS (=1) token delimits sequences
-        if (next == tokenizer->BOS_TOKEN_ID) { break; }
+        if (next == tokenizer->EOS_TOKEN_ID ||
+            (next == tokenizer->BOS_TOKEN_ID && pos > num_prompt_tokens)) {
+            break;
+        }
 
         // print the token as string, decode it with the Tokenizer object
         char *piece = decode(tokenizer, token, next);
@@ -833,20 +867,29 @@ void error_usage() {
 int main(int argc, char *argv[]) {
     printf("STARTED\n");
 
-    // default parameters
-    char *checkpoint_path = "assets/llama-3.2-1b/llama-3.2-1b.bin";  // e.g. out/model.bin
-    char *tokenizer_path = "assets/llama-3.2-1b/tokenizer.bin";
+#if defined _LLAMA_3_2_3B
+    char *checkpoint_path = "assets/llama-3_2-3b/llama-3_2-3b.bin";  // e.g. out/model.bin
+    char *tokenizer_path = "assets/llama-3_2-3b/tokenizer.bin";
+#elif defined _LLAMA_3_1_8B
+    char *checkpoint_path = "assets/llama-3_1-8b/llama-3_1-8b.bin";  // e.g. out/model.bin
+    char *tokenizer_path = "assets/llama-3_1-8b/tokenizer.bin";
+#else
+    char *checkpoint_path = "assets/llama-3_2-1b/llama-3_2-1b.bin";  // e.g. out/model.bin
+    char *tokenizer_path = "assets/llama-3_2-1b/tokenizer.bin";
+#endif
+
     float temperature = 1.0f;   // 0.0 = greedy deterministic. 1.0 = original. don't set higher
     float topp = 0.9f;          // top-p in nucleus sampling. 1.0 = off. 0.9 works well, but slower
     int steps = 256;            // number of steps to run for
     char *prompt = NULL;        // prompt string
     unsigned long long rng_seed = 0; // seed rng with time by default
+//    char *mode = "generate";    // generate|chat
     char *mode = "generate";    // generate|chat
     char *system_prompt = NULL; // the (optional) system prompt to use in chat mode
 
     // poor man's C argparse so we can override the defaults above from the command line
-    if (argc >= 2) { checkpoint_path = argv[1]; } else { error_usage(); }
-    for (int i = 2; i < argc; i+=2) {
+//    if (argc >= 2) { checkpoint_path = argv[1]; } else { error_usage(); }
+    for (int i = 1; i < argc; i+=2) {
         // do some basic validation
         if (i + 1 >= argc) { error_usage(); } // must have arg after flag
         if (argv[i][0] != '-') { error_usage(); } // must start with dash
@@ -868,6 +911,8 @@ int main(int argc, char *argv[]) {
     if (temperature < 0.0) temperature = 0.0;
     if (topp < 0.0 || 1.0 < topp) topp = 0.9;
     if (steps < 0) steps = 0;
+
+    printf("Using checkpoint_path: %s | tokenizer_path: %s\n", checkpoint_path, tokenizer_path);
 
     // build the Transformer via the model .bin file
     Transformer transformer;
