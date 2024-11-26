@@ -11,7 +11,7 @@ from typing import List
 import tiktoken
 from tiktoken.load import load_tiktoken_bpe
 
-TOKENIZER_MODEL = "tokenizer.model"  # the llama tiktoken tokenizer model
+TOKENIZER_MODEL = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'assets', 'llama-3_1-8b', 'tokenizer.model')  # the llama tiktoken tokenizer model
 
 
 class Tokenizer:
@@ -19,6 +19,7 @@ class Tokenizer:
 
     def __init__(self, tokenizer_model=None):
         model_path = tokenizer_model if tokenizer_model else TOKENIZER_MODEL
+        print(model_path)
         assert os.path.isfile(model_path), model_path
         mergeable_ranks = load_tiktoken_bpe(model_path)
         self.model_path = model_path
