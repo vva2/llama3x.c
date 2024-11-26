@@ -1,0 +1,2 @@
+- model card : https://github.com/meta-llama/llama-models/blob/main/models/llama3_2/MODEL_CARD.md
+- 
