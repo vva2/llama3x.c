@@ -1,30 +1,28 @@
 # Compiler and flags
 CC = gcc
-CFLAGS = -D_LLAMA_3_2_1B -Ofast -fopenmp -march=native -std=c11
+CFLAGS = -Ofast -fopenmp -march=native -lm
 
-# Target executable
-TARGET = llama3x
-
-# Source files
-SRCS = main.c win.c
-
-# Object files
-OBJS = $(SRCS:.c=.o)
+# Targets
+TARGETS = run1b run3b run8b
 
 # Default target
-all: $(TARGET)
+all: $(TARGETS)
 
-# Linking
-$(TARGET): $(OBJS)
-	$(CC) $(CFLAGS) -o $(TARGET) $(OBJS)
+# Build run1b
+run1b: main.c
+	$(CC) $(CFLAGS) -D_LLAMA_3_2_1B main.c -o run1b
 
-# Compilation
-%.o: %.c
-	$(CC) $(CFLAGS) -c $< -o $@
+# Build run3b
+run3b: main.c
+	$(CC) $(CFLAGS) -D_LLAMA_3_2_3B main.c -o run3b
+
+# Build run8b
+run8b: main.c
+	$(CC) $(CFLAGS) -D_LLAMA_3_1_8B main.c -o run8b
 
 # Clean up
 clean:
-	rm -f $(TARGET) $(OBJS)
+	rm -f $(TARGETS)
 
 # Phony targets
 .PHONY: all clean
