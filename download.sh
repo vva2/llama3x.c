@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# author : vva2
+
 module load GCCcore/12.2.0 Python/3.10.8
 source .venv/bin/activate
 
@@ -41,8 +43,8 @@ process_model() {
 
 # Process models
 process_model "assets/llama-3_2-1b" "llama-3_2-1b"
-# process_model "assets/llama-3_2-3b" "llama-3_2-3b"
-# process_model "assets/llama-3_1-8b" "llama-3_1-8b"
+process_model "assets/llama-3_2-3b" "llama-3_2-3b"
+process_model "assets/llama-3_1-8b" "llama-3_1-8b"
 
 # Build project
 make clean

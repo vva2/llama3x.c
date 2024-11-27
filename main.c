@@ -8,6 +8,7 @@
 #include <string.h>
 #include <fcntl.h>
 #include <math.h>
+#include <ctype.h>
 
 #if defined _WIN32
 #include "win.h"
