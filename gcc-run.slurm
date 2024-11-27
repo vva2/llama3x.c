@@ -6,13 +6,15 @@
 #SBATCH --mem=64G
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=4
-#SBATCH --partition=normal
+
+cd $SCRATCH/llama3x.c
+pwd
 
 module load GCCcore/12.2.0
 
 # Run the command
 make clean
 
-make run8b
+make run1b
 
-./run8b -i "where is texas a&m located?"
+./run1b -i "where is texas a&m located?"

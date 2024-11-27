@@ -1,14 +1,16 @@
 //
 // Created by vva on 11/11/2024.
 //
-
+#define _POSIX_C_SOURCE 199309L
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 #include <string.h>
 #include <fcntl.h>
 #include <math.h>
+
 #include <ctype.h>
+#include <stdint.h>
 
 #if defined _WIN32
 #include "win.h"

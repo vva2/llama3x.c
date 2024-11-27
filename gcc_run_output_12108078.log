@@ -1,0 +1,3 @@
+/scratch/user/pitta.venkat/llama3x.c
+rm -f run1b run3b run8b
+gcc -Ofast -fopenmp -march=native -lm -D_LLAMA_3_2_1B main.c -o run1b
