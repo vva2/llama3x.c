@@ -1,0 +1,9 @@
+rm -f run1b run3b run8b
+gcc -Ofast -fopenmp -march=native -lm -std=c99 -D_LLAMA_3_2_1B main.c -o run1b
+gcc -Ofast -fopenmp -march=native -lm -std=c99 -D_LLAMA_3_2_3B main.c -o run3b
+gcc -Ofast -fopenmp -march=native -lm -std=c99 -D_LLAMA_3_1_8B main.c -o run8b
+STARTED
+Using checkpoint_path: assets/llama-3_2-3b/llama-3_2-3b.bin | tokenizer_path: assets/llama-3_2-3b/tokenizer.bin
+where is texas a&m located??
+I think that the University is located in College Station, Texas. My friend took classes there.
+ENDED

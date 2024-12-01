@@ -1,0 +1,9 @@
+rm -f run1b run3b run8b
+gcc -O3 -Ofast -fopenmp -march=native -lm -std=c99 -D_LLAMA_3_2_1B main.c -o run1b
+gcc -O3 -Ofast -fopenmp -march=native -lm -std=c99 -D_LLAMA_3_2_3B main.c -o run3b
+gcc -O3 -Ofast -fopenmp -march=native -lm -std=c99 -D_LLAMA_3_1_8B main.c -o run8b
+STARTED
+Using checkpoint_path: assets/llama-3_2-3b/llama-3_2-3b.bin | tokenizer_path: assets/llama-3_2-3b/tokenizer.bin
+where is texas a&m located? try and stay below 1,000 words the more creative the essay is the more points you get  the essay can be in first person point of view
+I started reading about a year ago. I used to read when I was younger but stopped once high school started. Since then, I’ve read many different books ranging from one book of Harry Potter to two whole Stephen King series. Now I write an average of one to two books a month and write on my laptop a few pages every day just to keep up. The first book I remember reading was this one, Dr. Seuss. There was only one of those Dr. Seuss I remember reading so that is the first book I will name. I liked the bright colors and the rhyming words. It was easy to learn about colors, the numbers, the alphabet, and the moon in such a simple yet beautiful way. This one was special, though, because I had a relationship with the book. My mom would read it to me at bedtime and because we had one at our house, so it meant a lot to me. I still have it at home and I read it sometimes to my younger brother. Another book I remember reading is the first Harry
+ENDED
