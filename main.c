@@ -8,6 +8,7 @@
 #include <string.h>
 #include <fcntl.h>
 #include <math.h>
+#include "trie.h"
 
 #include <ctype.h>
 #include <stdint.h>
@@ -102,7 +103,7 @@ typedef struct {
 typedef struct {
     char** vocab;
     float* vocab_scores;
-    TokenIndex *sorted_vocab;
+    TrieNode *trie;
     int vocab_size;
     unsigned int max_token_length;
     unsigned char byte_pieces[512]; // stores all single-byte strings
@@ -245,10 +246,10 @@ void build_transformer(Transformer *t, char* checkpoint_path) {
 void build_tokenizer(Tokenizer* t, char* tokenizer_path, int vocab_size) {
     // i should have written the vocab_size into the tokenizer file... sigh
     t->vocab_size = vocab_size;
+    t->trie = NULL;
     // malloc space to hold the scores and the strings
     t->vocab = (char**)malloc(vocab_size * sizeof(char*));
     t->vocab_scores = (float*)malloc(vocab_size * sizeof(float));
-    t->sorted_vocab = NULL; // initialized lazily
     for (int i = 0; i < 256; i++) {
         t->byte_pieces[i * 2] = (unsigned char)i;
         t->byte_pieces[i * 2 + 1] = '\0';
@@ -311,7 +312,7 @@ void free_tokenizer(Tokenizer* t) {
     for (int i = 0; i < t->vocab_size; i++) { free(t->vocab[i]); }
     free(t->vocab);
     free(t->vocab_scores);
-    free(t->sorted_vocab);
+    free_trie(t->trie);
 }
 
 void free_sampler(Sampler* sampler) {
@@ -322,11 +323,9 @@ int compare_tokens(const void *a, const void *b) {
     return strcmp(((TokenIndex*)a)->str, ((TokenIndex*)b)->str);
 }
 
-int str_lookup(char *str, TokenIndex *sorted_vocab, int vocab_size) {
-    // efficiently find the perfect match for str in vocab, return its index or -1 if not found
-    TokenIndex tok = { .str = str }; // acts as the key to search for
-    TokenIndex *res = bsearch(&tok, sorted_vocab, vocab_size, sizeof(TokenIndex), compare_tokens);
-    return res != NULL ? res->id : -1;
+int str_lookup(char *str, TrieNode *trie) {
+    // efficiently trie_search the perfect match for str in vocab, return its index or -1 if not found
+    return trie_search(trie, str);
 }
 
 void rmsnorm(float* o, float* x, float* weight, int size, float norm_eps) {
@@ -359,7 +358,7 @@ void matmul(float* xout, float* x, float* w, int n, int d) {
 }
 
 void softmax(float* x, int size) {
-    // find max value (for numerical stability)
+    // trie_search max value (for numerical stability)
     float max_val = x[0];
     for (int i = 1; i < size; i++) {
         if (x[i] > max_val) {
@@ -531,14 +530,12 @@ void encode(Tokenizer* t, char *text, int8_t bos, int8_t eos, int *tokens, int *
     // bos != 0 means prepend the BOS token (=1), eos != 0 means append the EOS token (=2)
     if (text == NULL) { fprintf(stderr, "cannot encode NULL text\n"); exit(EXIT_FAILURE); }
 
-    if (t->sorted_vocab == NULL) {
+    if (t->trie == NULL) {
         // lazily malloc and sort the vocabulary
-        t->sorted_vocab = malloc(t->vocab_size * sizeof(TokenIndex));
+        t->trie = create_trie();
         for (int i = 0; i < t->vocab_size; i++) {
-            t->sorted_vocab[i].str = t->vocab[i];
-            t->sorted_vocab[i].id = i;
+            insert(t->trie, t->vocab[i], i);
         }
-        qsort(t->sorted_vocab, t->vocab_size, sizeof(TokenIndex), compare_tokens);
     }
 
     // create a temporary buffer that will store merge candidates of always two consecutive tokens
@@ -557,7 +554,7 @@ void encode(Tokenizer* t, char *text, int8_t bos, int8_t eos, int *tokens, int *
     // TODO: pretty sure this isn't correct in the general case but I don't have the
     // energy to read more of the sentencepiece code to figure out what it's doing
     if (text[0] != '\0') {
-        int dummy_prefix = str_lookup(" ", t->sorted_vocab, t->vocab_size);
+        int dummy_prefix = str_lookup(" ", t->trie);
         tokens[(*n_tokens)++] = dummy_prefix;
     }
 
@@ -594,7 +591,7 @@ void encode(Tokenizer* t, char *text, int8_t bos, int8_t eos, int *tokens, int *
         }
 
         // ok c+1 is not a continuation byte, so we've read in a full codepoint
-        int id = str_lookup(str_buffer, t->sorted_vocab, t->vocab_size);
+        int id = str_lookup(str_buffer, t->trie);
 
         if (id != -1) {
             // we found this codepoint in vocab, add it as a token
@@ -619,7 +616,7 @@ void encode(Tokenizer* t, char *text, int8_t bos, int8_t eos, int *tokens, int *
         for (int i=0; i < (*n_tokens-1); i++) {
             // check if we can merge the pair (tokens[i], tokens[i+1])
             sprintf(str_buffer, "%s%s", t->vocab[tokens[i]], t->vocab[tokens[i+1]]);
-            int id = str_lookup(str_buffer, t->sorted_vocab, t->vocab_size);
+            int id = str_lookup(str_buffer, t->trie);
             if (id != -1 && t->vocab_scores[id] > best_score) {
                 // this merge pair exists in vocab! record its score and position
                 best_score = t->vocab_scores[id];
@@ -629,7 +626,7 @@ void encode(Tokenizer* t, char *text, int8_t bos, int8_t eos, int *tokens, int *
         }
 
         if (best_idx == -1) {
-            break; // we couldn't find any more pairs to merge, so we're done
+            break; // we couldn't trie_search any more pairs to merge, so we're done
         }
 
         // merge the consecutive pair (best_idx, best_idx+1) into new token best_id
