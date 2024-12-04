@@ -16,4 +16,4 @@ module load GCCcore/12.2.0
 make clean
 make all
 
-./run3b -i "where is texas a&m located?"
+./run1b -i "once upon a time" -t 0.0

@@ -1,0 +1,16 @@
+/usr/bin/ld: /sw/eb/sw/GCCcore/12.2.0/lib/gcc/x86_64-pc-linux-gnu/12.2.0/libgcc.a(_muldi3.o): unable to initialize decompress status for section .debug_info
+/usr/bin/ld: /sw/eb/sw/GCCcore/12.2.0/lib/gcc/x86_64-pc-linux-gnu/12.2.0/libgcc.a(_muldi3.o): unable to initialize decompress status for section .debug_info
+/usr/bin/ld: /sw/eb/sw/GCCcore/12.2.0/lib/gcc/x86_64-pc-linux-gnu/12.2.0/libgcc.a(_muldi3.o): unable to initialize decompress status for section .debug_info
+/usr/bin/ld: /sw/eb/sw/GCCcore/12.2.0/lib/gcc/x86_64-pc-linux-gnu/12.2.0/libgcc.a(_muldi3.o): unable to initialize decompress status for section .debug_info
+/usr/bin/ld: /sw/eb/sw/GCCcore/12.2.0/lib/gcc/x86_64-pc-linux-gnu/12.2.0/libgcc.a(_muldi3.o): unable to initialize decompress status for section .debug_info
+/usr/bin/ld: /sw/eb/sw/GCCcore/12.2.0/lib/gcc/x86_64-pc-linux-gnu/12.2.0/libgcc.a(_muldi3.o): unable to initialize decompress status for section .debug_info
+/usr/bin/ld: /sw/eb/sw/GCCcore/12.2.0/lib/gcc/x86_64-pc-linux-gnu/12.2.0/libgcc.a(_muldi3.o): unable to initialize decompress status for section .debug_info
+/usr/bin/ld: /sw/eb/sw/GCCcore/12.2.0/lib/gcc/x86_64-pc-linux-gnu/12.2.0/libgcc.a(_muldi3.o): unable to initialize decompress status for section .debug_info
+/usr/bin/ld: /sw/eb/sw/GCCcore/12.2.0/lib/gcc/x86_64-pc-linux-gnu/12.2.0/crtfastmath.o: unable to initialize decompress status for section .debug_info
+/usr/bin/ld: /sw/eb/sw/GCCcore/12.2.0/lib/gcc/x86_64-pc-linux-gnu/12.2.0/crtfastmath.o: unable to initialize decompress status for section .debug_info
+/usr/bin/ld: /sw/eb/sw/GCCcore/12.2.0/lib/gcc/x86_64-pc-linux-gnu/12.2.0/crtfastmath.o: unable to initialize decompress status for section .debug_info
+/usr/bin/ld: /sw/eb/sw/GCCcore/12.2.0/lib/gcc/x86_64-pc-linux-gnu/12.2.0/crtfastmath.o: unable to initialize decompress status for section .debug_info
+/sw/eb/sw/GCCcore/12.2.0/lib/gcc/x86_64-pc-linux-gnu/12.2.0/crtfastmath.o: file not recognized: File format not recognized
+collect2: error: ld returned 1 exit status
+make: *** [run1b] Error 1
+/var/spool/slurmd/job12158233/slurm_script: line 19: ./run1b: No such file or directory

@@ -1,0 +1,2 @@
+rm -f run1b run3b run8b
+gcc -Ofast -fopenmp -march=native -lm -std=c99 -D_LLAMA_3_2_1B main.c -o run1b
