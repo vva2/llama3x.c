@@ -10,7 +10,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
-typedef struct {
+typedef struct TrieNode {
     char c;
     struct TrieNode *children;
     struct TrieNode *next;

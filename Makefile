@@ -1,6 +1,6 @@
 # Compiler and flags
 CC = gcc
-CFLAGS = -Ofast -fopenmp -march=native -lm -std=c99
+CFLAGS = -Ofast -fopenmp -march=native -lm
 
 # Targets
 TARGETS = run1b run3b run8b

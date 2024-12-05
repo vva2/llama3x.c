@@ -10,7 +10,7 @@
 
 cd $SCRATCH/llama3x.c
 
-module load GCCcore/12.2.0
+module load GCCcore/12.2.0 Python/3.10.8
 
 # Run the command
 make clean
