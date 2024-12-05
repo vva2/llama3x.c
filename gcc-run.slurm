@@ -16,4 +16,4 @@ module load GCCcore/12.2.0 Python/3.10.8
 make clean
 make all
 
-./run1b -i "once upon a time" -t 0.0
+./run8b -i "once upon a time" -t 0.0

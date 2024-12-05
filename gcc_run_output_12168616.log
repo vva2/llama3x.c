@@ -1,0 +1,8 @@
+rm -f run1b run3b run8b
+gcc -Ofast -fopenmp -march=native -lm -D_LLAMA_3_2_1B main.c -o run1b
+gcc -Ofast -fopenmp -march=native -lm -D_LLAMA_3_2_3B main.c -o run3b
+gcc -Ofast -fopenmp -march=native -lm -D_LLAMA_3_1_8B main.c -o run8b
+STARTED
+Using checkpoint_path: assets/llama-3_2-1b/llama-3_2-1b.bin | tokenizer_path: assets/llama-3_2-1b/tokenizer.bin
+once upon a time, there was a man named John. He was a farmer, and he had a wife and a son. One day, John went out to his field to plant some seeds. As he was planting, he noticed that the soil was very dry. He tried to water the seeds, but they just wouldn't take. Finally, he gave up and went home. When he got home, he told his wife and son about his problem. They both tried to water the seeds, but they still didn't take. Finally, John's wife said, "I know what we can do. We'll go to the store and buy some water." So they went to the store and bought some water. When they got home, they put the water in a bucket and poured it on the seeds. The seeds started to grow, and soon they were big and healthy. John's wife and son were so happy that they decided to plant more seeds. They went out to their field again, and this time they planted more seeds. They kept doing this for a long time, and eventually they had a big field full of healthy plants. John's wife and son were so proud of their hard work that they decided to plant more seeds. They went out to their field
+ENDED
