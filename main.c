@@ -844,6 +844,7 @@ void generate(Transformer *transformer, Tokenizer *tokenizer, Sampler *sampler, 
     if (pos > 1) {
         long end = time_in_ms();
         fprintf(stderr, "achieved tok/s: %f\n", (pos-1) / (double)(end-start)*1000);
+        printf("achieved tok/s: %f\n", (pos-1) / (double)(end-start)*1000);
     }
 
     free(prompt_tokens);

@@ -3,8 +3,8 @@ gcc -Ofast -fopenmp -march=native -lm -D_LLAMA_3_2_1B main.c -o run1b
 gcc -Ofast -fopenmp -march=native -lm -D_LLAMA_3_2_3B main.c -o run3b
 gcc -Ofast -fopenmp -march=native -lm -D_LLAMA_3_1_8B main.c -o run8b
 STARTED
-Using checkpoint_path: assets/llama-3_2-3b/llama-3_2-3b.bin | tokenizer_path: assets/llama-3_2-3b/tokenizer.bin
+Using checkpoint_path: assets/llama-3_1-8b/llama-3_1-8b.bin | tokenizer_path: assets/llama-3_1-8b/tokenizer.bin
 once upon a time there was a king who had a beautiful daughter. The king was very proud of his daughter and wanted to marry her to a prince who was as handsome as she was beautiful. The king sent out a proclamation that any prince who could defeat him in a game of chess would be allowed to marry his daughter. Many princes came to the castle to try their luck, but none of them could defeat the king. One day, a young prince named Jack arrived at the castle. He was a skilled chess player and he knew that he had a chance to win the game. He sat down at the chessboard and began to play. The king was surprised to see that Jack was a good player, but he was determined to win. He made a move and Jack countered it. The king made another move and Jack countered it again. The game went on like this for a while, with each player making a move and the other player countering it. Finally, the king made a move that Jack couldn't counter. He was defeated and the king declared that Jack could marry his daughter. Jack was overjoyed and he and the princess lived happily ever after.
 
-achieved tok/s: 0.150313
+achieved tok/s: 0.129163
 ENDED
