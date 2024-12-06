@@ -85,4 +85,4 @@ This implementation is based on [llama2.c](https://github.com/karpathy/llama2.c)
 
 ## License
 
-[Include your license information here]
+This project is open-source and available under the Apache License. See the `LICENSE` file for details.
